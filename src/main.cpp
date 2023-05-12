@@ -176,10 +176,12 @@ int main()
     FetchSamples = 0;
     if (getX() != 0 || getY() != 0 || getZ() != 0)
     {
-      while (arr_index < 200)
+      arr_index = 0;
+      while (arr_index < 20)
       {
 
         arr_index++;
+        //  add the values to array
         // record 200 values and break
         printf("x- %d\n", getX());
         printf("y- %d\n", getY());
