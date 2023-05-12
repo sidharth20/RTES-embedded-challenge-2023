@@ -3,10 +3,10 @@
 /*******************************************/
 //DEFINES
 /*******************************************/
-#define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, PA_0)
-// #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)
-#define LED_HIGH HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)
-#define LED_LOW HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET)
+// #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, PA_0)
+// // #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)
+// #define LED_HIGH HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)
+// #define LED_LOW HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET)
 
 
 #define CTRL_REG1 0x20  // Controls the operating mode and data rate of the L3GD20 gyro sensor
@@ -71,6 +71,38 @@ volatile int xAxis_arr[200], yAxis_arr[200], zAxis_arr[200];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
+
+
+InterruptIn button(PA_0);
+Timeout debounceTimeout;
+volatile bool debounceFlag;
+volatile bool buttonPressed;
+
+// debouncing clear
+void debounce_clear()
+{
+    debounceFlag = false;
+}
+
+
+// button interrupt handler
+void button_isr()
+{
+    if (debounceFlag)
+    {
+        return;
+    }
+    debounceFlag = true;
+    // TODO: replace Timeout with Ticker, since Timeout has been deprecated
+    debounceTimeout.attach(&debounce_clear, 0.05); // Set the timeout to 50 ms
+    buttonPressed = true;
+}
+
+void init_button()
+{
+    button.fall(&button_isr);
+}
+
 /*******************************************/
 //FUNCTIONS
 /*******************************************/
@@ -128,6 +160,8 @@ void FetchAxesValues()
 //MAIN FUNCTION
 /******************************************************/
 int main() {
+  init_button();
+
   /* Chip must be deselected at first */
   cs = 1;
 
@@ -162,9 +196,8 @@ int main() {
   tim.start();
   t.attach(&FetchAxesValues, 500ms);
 
-        // if(BUTTON_STATE == 1)
-        // {
-        //     LED_HIGH;
+        if(buttonPressed)
+        {
             /* Button is pressed */
              while(1) {
 
@@ -194,11 +227,11 @@ int main() {
                     rtos::ThisThread::sleep_for(100ms);
                 
              }
-    // }
-    //     else
-    //   {
-    //       LED_LOW;
-    //   }
+    }
+        else
+      {
+          /* do nothing*/
+      }
 
     return 0;
 }
