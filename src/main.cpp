@@ -3,12 +3,6 @@
 /*******************************************/
 //DEFINES
 /*******************************************/
-// #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, PA_0)
-// // #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)
-// #define LED_HIGH HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)
-// #define LED_LOW HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET)
-
-
 #define CTRL_REG1 0x20  // Controls the operating mode and data rate of the L3GD20 gyro sensor
 #define CTRL_REG2 0x21
 #define CTRL_REG3 0x22
@@ -68,41 +62,10 @@ volatile int AngularMode = 0;
 int arr_index = 0;
 
 volatile int xAxis_arr[200], yAxis_arr[200], zAxis_arr[200];
+int flag_start=0;
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
-
-
-InterruptIn button(PA_0);
-Timeout debounceTimeout;
-volatile bool debounceFlag;
-volatile bool buttonPressed;
-
-// debouncing clear
-void debounce_clear()
-{
-    debounceFlag = false;
-}
-
-
-// button interrupt handler
-void button_isr()
-{
-    if (debounceFlag)
-    {
-        return;
-    }
-    debounceFlag = true;
-    // TODO: replace Timeout with Ticker, since Timeout has been deprecated
-    debounceTimeout.attach(&debounce_clear, 0.05); // Set the timeout to 50 ms
-    buttonPressed = true;
-}
-
-void init_button()
-{
-    button.fall(&button_isr);
-}
-
 /*******************************************/
 //FUNCTIONS
 /*******************************************/
@@ -160,8 +123,6 @@ void FetchAxesValues()
 //MAIN FUNCTION
 /******************************************************/
 int main() {
-  init_button();
-
   /* Chip must be deselected at first */
   cs = 1;
 
@@ -196,42 +157,54 @@ int main() {
   tim.start();
   t.attach(&FetchAxesValues, 500ms);
 
-        if(buttonPressed)
-        {
-            /* Button is pressed */
-             while(1) {
+  int FetchSamples = 1;
+  int totalSamples = 3;
 
-                
-                FetchSamples = 0;
-                /* To get X Axis values */
-                xAxis = (int)GetAxesFromGyroSensor(OUT_X_L, OUT_X_H);
-                /* To get Y Axis values */
-                yAxis = (int)GetAxesFromGyroSensor(OUT_Y_L, OUT_Y_H);
-                /* To get Z Axis values */
-                zAxis = (int)GetAxesFromGyroSensor(OUT_Z_L, OUT_Z_H);
+    while(1) {
+        /* To get X Axis values */
+        xAxis = (int)GetAxesFromGyroSensor(OUT_X_L, OUT_X_H);
+        /* To get Y Axis values */
+        yAxis = (int)GetAxesFromGyroSensor(OUT_Y_L, OUT_Y_H);
+        /* To get Z Axis values */
+        zAxis = (int)GetAxesFromGyroSensor(OUT_Z_L, OUT_Z_H);
 
-                    xAxis_rad = xAxis * ANG_TO_RAD * 0.01775;
-                    yAxis_rad = yAxis * ANG_TO_RAD * 0.01775;
-                    zAxis_rad = zAxis * ANG_TO_RAD * 0.01775;
-                    xAxis_arr[arr_index] = xAxis_rad;
-                    yAxis_arr[arr_index] = yAxis_rad;
-                    zAxis_arr[arr_index] = zAxis_rad;
-                    arr_index++;
+        xAxis_rad = xAxis * ANG_TO_RAD * 0.01775;
+        yAxis_rad = yAxis * ANG_TO_RAD * 0.01775;
+        zAxis_rad = zAxis * ANG_TO_RAD * 0.01775;
 
-                    printf("x- %d\n",xAxis_rad);
-                    printf("y- %d\n",yAxis_rad);
-                    printf("z- %d\n",zAxis_rad);
-                    printf("\n\n");
+        if(xAxis_rad!=0 || yAxis_rad!=0 || zAxis_rad!=0){
+            flag_start=1;
+        }
+        if(flag_start){
+            xAxis_arr[arr_index] += xAxis_rad;
+            yAxis_arr[arr_index] += yAxis_rad;
+            zAxis_arr[arr_index] += zAxis_rad;
+            arr_index++;
 
-                    // if(arr_index==200) break;
-                    rtos::ThisThread::sleep_for(100ms);
-                
-             }
+            printf("x- %d\n",xAxis_rad);
+            printf("y- %d\n",yAxis_rad);
+            printf("z- %d\n",zAxis_rad);
+            printf("\n\n");
+
+            // if(arr_index==200) break;
+            rtos::ThisThread::sleep_for(10ms);
+        }
+
+        if(arr_index>=200 && flag_start==1){
+            rtos::ThisThread::sleep_for(1000ms);
+            arr_index=0;
+            flag_start=0;
+            FetchSamples+=1;
+            printf("Please record key gesture %d more time\n",totalSamples-FetchSamples);
+        }
+
+        if(FetchSamples == totalSamples){
+            /* go to check phase and unlocking phase*/
+            printf("Done\n");
+            //break;
+        }
+
+    
     }
-        else
-      {
-          /* do nothing*/
-      }
-
     return 0;
 }
