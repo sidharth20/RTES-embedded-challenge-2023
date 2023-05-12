@@ -177,7 +177,7 @@ int main()
     if (getX() != 0 || getY() != 0 || getZ() != 0)
     {
       arr_index = 0;
-      while (arr_index < 20)
+      while (arr_index < 40)
       {
 
         arr_index++;
@@ -187,7 +187,7 @@ int main()
         printf("y- %d\n", getY());
         printf("z- %d\n", getZ());
         printf("\n\n");
-        rtos::ThisThread::sleep_for(100ms);
+        rtos::ThisThread::sleep_for(50ms);
       }
       printf("wait for 5 seconds\n");
       rtos::ThisThread::sleep_for(5000ms);
