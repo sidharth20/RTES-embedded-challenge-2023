@@ -66,8 +66,8 @@ volatile bool FetchSamples = 0;
 volatile int AngularMode = 0;
 int arr_index = 0;
 
-volatile int xAxis_arr[200], yAxis_arr[200], zAxis_arr[200];
-volatile int xAxis_arr2[200], yAxis_arr2[200], zAxis_arr2[200];
+volatile int xAxis_arr[256], yAxis_arr[256], zAxis_arr[256];
+volatile int xAxis_arr2[256], yAxis_arr2[256], zAxis_arr2[256];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
@@ -183,7 +183,7 @@ int main()
                 flag_start=1;
             }
             if(flag_start){
-                if(arr_index==200) continue;
+                if(arr_index==256) continue;
                 xAxis_arr[arr_index] += getX();
                 yAxis_arr[arr_index] += getY();
                 zAxis_arr[arr_index] += getZ();
@@ -198,12 +198,12 @@ int main()
                 rtos::ThisThread::sleep_for(10ms);
                 }
 
-            if(arr_index>=200 && flag_start==1){
+            if(arr_index>=256 && flag_start==1){
                 rtos::ThisThread::sleep_for(2000ms);
                 arr_index=0;
                 flag_start=0;
                 curSamples++;
-                printf("Please record key gesture %d more time\n",(totalSamples-curSamples));
+                printf("Please record key gesture %d more time\n",(totalSamples-curSamples+1));
             }
 
             if(curSamples == totalSamples){
@@ -215,13 +215,40 @@ int main()
             }
     }
     else{
-
-        printf("test");
+        break;
+        // printf("test");
     }
-
-
-
   }
+  
+  //Now recording the user gesture for verification
+  while(1){
+    flag_start=0;
+    arr_index=0;
+
+    if (getX() != 0 || getY() != 0 || getZ() != 0)
+    {
+        flag_start=1;
+    }
+    if(flag_start){
+        if(arr_index==256) continue;
+        xAxis_arr2[arr_index] += getX();
+        yAxis_arr2[arr_index] += getY();
+        zAxis_arr2[arr_index] += getZ();
+        arr_index++;
+
+        printf("x- %d\n",getX());
+        printf("y- %d\n",getY());
+        printf("z- %d\n",getZ());
+        printf("\n\n");
+
+        // if(arr_index==200) break;
+        rtos::ThisThread::sleep_for(10ms);
+        }
+    if(arr_index==256) break; 
+  }
+  //Now we average out the calculation recorded values and start the recording again for unlock sequence
+  //And now we compare both the recorded values
+
 
   return 0;
 }
