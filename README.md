@@ -24,5 +24,5 @@ the resource. (*User must press detect pattern in the serial monitor*)
 **Video Demonstration:** [Link](https://drive.google.com/file/d/1lBpOHOMhmpoazfBHMAqMsBt1aU_QnAA6/view?usp=share_link)
 
 **Group Members**
-*Sidharth Shyamsukha(ss14885@nyu.edu)
-*Shvejan Mutheboyina(ssm10076@nyu.edu)
+* Sidharth Shyamsukha(ss14885@nyu.edu)
+* Shvejan Mutheboyina(ssm10076@nyu.edu)
