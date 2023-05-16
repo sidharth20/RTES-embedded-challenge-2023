@@ -78,42 +78,45 @@ void init_button()
 }
 
 
-void displayMessage1()
-{
-    lcd.Clear(LCD_COLOR_BLACK);
-    lcd.SetBackColor(LCD_COLOR_BLACK);
-    lcd.SetTextColor(LCD_COLOR_RED);
-    BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"!ALERT MESSAGE!", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)" DEFLATION RATE WAS", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"NOT STEADY", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(11), (uint8_t *)"PLEASE PRESS THE", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(12), (uint8_t *)"RESET BUTTON TO", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(13), (uint8_t *)"START AGAIN", CENTER_MODE);
-    BSP_LCD_DrawRect(14, LINE(8), 212, LINE(7));
-}
-
-
     
 
 
-void displayMessage2()
+void startMessage()
 {
     lcd.Clear(LCD_COLOR_BLACK);
     lcd.SetBackColor(LCD_COLOR_BLACK);
     lcd.SetTextColor(LCD_COLOR_RED);
     BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"!ALERT MESSAGE!", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"THESHOLD VALUE", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"!START RECORDING", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"GESTURE", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
     BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
     wait_us(3000000);
-    // lcd.Clear(LCD_COLOR_BLACK);
-    // lcd.SetBackColor(LCD_COLOR_BLACK);
+}
+
+
+void lockMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_RED);
     BSP_LCD_DrawHLine(0, LINE(2), 240);
-    // lcd.DisplayStringAt(0, LINE(15), (uint8_t *)"!ALERT MESSAGE!", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(15), (uint8_t *)"START DECREASING", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(17), (uint8_t *)"THE PRESSURE", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"GESTURE RECORDED", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE LOCKED", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+    wait_us(3000000);
+}
+
+void unlockMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_RED);
+    BSP_LCD_DrawHLine(0, LINE(2), 240);
+    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"CORRECT GESTURE", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE UNLOCKED", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
     BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
     wait_us(3000000);
 }
@@ -133,7 +136,7 @@ int main() {
 
     if (buttonPressed) {
       printf("> button pressed.\n");
-      displayMessage1();
+      startMessage();
       buttonPressed = false;
     }
     
