@@ -47,7 +47,7 @@ Z corresponds to Yaw angle */
 
 /* Factor to convert Angles to radians */
 #define ANG_TO_RAD 0.0174533 // Pi/180
-
+#define THRESHOLD 60
 /*******************************************/
 // PIN DECLARATIONS
 /*******************************************/
@@ -66,7 +66,8 @@ volatile bool FetchSamples = 0;
 volatile int AngularMode = 0;
 int arr_index = 0;
 
-volatile int xAxis_arr[200], yAxis_arr[200], zAxis_arr[200];
+volatile int xAxis_arr_base[200], yAxis_arr_base[200], zAxis_arr_base[200];
+volatile int xAxis_arr_new[200], yAxis_arr_new[200], zAxis_arr_new[200];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
@@ -140,6 +141,24 @@ int getZ()
   return zAxis_rad;
 }
 
+bool findMatch()
+{
+  // If the error between the recorded and input sequence is within the tolerance, return true.
+  int x_loss = 0;
+  int y_loss = 0;
+  int z_loss = 0;
+  for (uint32_t i = 0; i < 40; i++)
+  {
+    x_loss += pow((xAxis_arr_base[i] - xAxis_arr_new[i]), 2);
+    y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
+    z_loss += pow((zAxis_arr_base[i] - zAxis_arr_new[i]), 2);
+  }
+  printf("%d, %d, %d", x_loss, y_loss, z_loss);
+  if (x_loss > THRESHOLD || y_loss > THRESHOLD || z_loss > THRESHOLD)
+    return false;
+  return true;
+}
+
 int main()
 {
   cs = 1;
@@ -169,29 +188,105 @@ int main()
 
   tim.start();
   t.attach(&FetchAxesValues, 500ms);
+  int recording_count = 2;
+  bool result = false;
 
   while (1)
   {
-
+    int gx = getX();
+    int gy = getY();
+    int gz = getZ();
     FetchSamples = 0;
-    if (getX() != 0 || getY() != 0 || getZ() != 0)
+    if (recording_count < 3 && (gx != 0 || gy != 0 || gz != 0))
     {
+
       arr_index = 0;
       while (arr_index < 40)
       {
+        gx = getX();
+        gy = getY();
+        gz = getZ();
+
+        xAxis_arr_base[arr_index] += gx;
+        yAxis_arr_base[arr_index] += gy;
+        zAxis_arr_base[arr_index] += gz;
 
         arr_index++;
         //  add the values to array
         // record 200 values and break
-        printf("x- %d\n", getX());
-        printf("y- %d\n", getY());
-        printf("z- %d\n", getZ());
+        printf("x- %d\n", gx);
+        printf("y- %d\n", gy);
+        printf("z- %d\n", gz);
         printf("\n\n");
         rtos::ThisThread::sleep_for(50ms);
       }
+      printf("gesture %d recorded\n", recording_count + 1);
       printf("wait for 5 seconds\n");
-      rtos::ThisThread::sleep_for(5000ms);
-      printf("start recording\n");
+      rtos::ThisThread::sleep_for(2000ms);
+      printf("start next recording\n");
+      recording_count++;
+    }
+    else if (recording_count >= 3)
+    {
+      for (int i = 0; i < 40; i++)
+      {
+        xAxis_arr_base[i] /= 3;
+        yAxis_arr_base[i] /= 3;
+        zAxis_arr_base[i] /= 3;
+      }
+      printf(" the gesture is recorded and saved, please wait for the next command\n");
+      rtos::ThisThread::sleep_for(3000ms);
+      printf("The device is in recognition mode, Please make a gesture\n");
+      break;
+    }
+    else
+    {
+      // write relavent print statements
+      printf("The device is in recording mode, please record the %d \n", recording_count);
+    }
+  }
+  printf("Make a gesture\n");
+  while (1)
+  {
+    int gx = getX();
+    int gy = getY();
+    int gz = getZ();
+    FetchSamples = 0;
+    if (gx != 0 || gy != 0 || gz != 0)
+    {
+
+      arr_index = 0;
+      while (arr_index < 40)
+      {
+        gx = getX();
+        gy = getY();
+        gz = getZ();
+
+        xAxis_arr_new[arr_index] = gx;
+        yAxis_arr_new[arr_index] = gy;
+        zAxis_arr_new[arr_index] = gz;
+
+        arr_index++;
+        //  add the values to array
+        // record 200 values and break
+        printf("x- %d\n", gx);
+        printf("y- %d\n", gy);
+        printf("z- %d\n", gz);
+        printf("\n\n");
+        rtos::ThisThread::sleep_for(50ms);
+      }
+      printf("Gesture recorded\n");
+      printf("Matching the gesture\n");
+      result = findMatch();
+      if (result)
+      {
+        printf("gesture matched, unlocked\n");
+        // break;
+      }
+      else
+      {
+        printf("gesture not matched, try again in 2 seconds\n");
+      }
     }
   }
 
