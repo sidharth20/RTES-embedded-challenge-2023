@@ -51,6 +51,7 @@ Z corresponds to Yaw angle */
 /* Factor to convert Angles to radians */
 #define ANG_TO_RAD 0.0174533 // Pi/180
 #define THRESHOLD 60
+#define RESOLUTION 80
 /*******************************************/
 // PIN DECLARATIONS
 /*******************************************/
@@ -212,7 +213,7 @@ bool findMatch()
   int x_loss = 0;
   int y_loss = 0;
   int z_loss = 0;
-  for (uint32_t i = 0; i < 40; i++)
+  for (uint32_t i = 0; i < RESOLUTION; i++)
   {
     x_loss += pow((xAxis_arr_base[i] - xAxis_arr_new[i]), 2);
     y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
@@ -266,7 +267,7 @@ int main()
     {
 
       arr_index = 0;
-      while (arr_index < 40)
+      while (arr_index < RESOLUTION)
       {
         gx = getX();
         gy = getY();
@@ -279,12 +280,12 @@ int main()
         arr_index++;
         //  add the values to array
         // record 200 values and break
-        printf("x- %d\n", gx);
-        printf("y- %d\n", gy);
-        printf("z- %d\n", gz);
-        printf("\n\n");
+        // printf("x- %d\n", gx);
+        // printf("y- %d\n", gy);
+        // printf("z- %d\n", gz);
+        // printf("\n\n");
         printMessage("Recording...");
-        rtos::ThisThread::sleep_for(50ms);
+        rtos::ThisThread::sleep_for(25ms);
       }
       printf("gesture %d recorded\n", recording_count + 1);
       printf("wait for 5 seconds\n");
@@ -329,7 +330,7 @@ int main()
     {
 
       arr_index = 0;
-      while (arr_index < 40)
+      while (arr_index < RESOLUTION)
       {
         gx = getX();
         gy = getY();
@@ -347,7 +348,7 @@ int main()
         printf("z- %d\n", gz);
         printf("\n\n");
         printMessage("Recording...");
-        rtos::ThisThread::sleep_for(50ms);
+        rtos::ThisThread::sleep_for(25ms);
       }
       printf("Gesture recorded\n");
       printf("Matching the gesture\n");
