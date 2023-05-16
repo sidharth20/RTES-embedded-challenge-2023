@@ -1,8 +1,11 @@
 #include <mbed.h>
-
+#include "stdlib.h"
+#include "drivers/LCD_DISCO_F429ZI.h"
 /*******************************************/
 // DEFINES
 /*******************************************/
+LCD_DISCO_F429ZI lcd;
+
 #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, PA_0)
 // #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)
 #define LED_HIGH HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)
@@ -71,6 +74,63 @@ volatile int xAxis_arr_new[200], yAxis_arr_new[200], zAxis_arr_new[200];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
+
+/*******************************************/
+// DISPLAY MESSAGES
+/*******************************************/
+void startMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_ORANGE);
+    BSP_LCD_DrawHLine(0, LINE(2), 240);
+    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"!START RECORDING", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"GESTURE", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+    wait_us(3000000);
+}
+
+
+void lockMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_WHITE);
+    BSP_LCD_DrawHLine(0, LINE(2), 240);
+    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"GESTURE RECORDED", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE LOCKED", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+    wait_us(3000000);
+}
+
+void unlockMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_GREEN);
+    BSP_LCD_DrawHLine(0, LINE(2), 240);
+    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"CORRECT GESTURE", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE UNLOCKED", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+    wait_us(3000000);
+}
+
+void errorMessage()
+{
+    lcd.Clear(LCD_COLOR_BLACK);
+    lcd.SetBackColor(LCD_COLOR_BLACK);
+    lcd.SetTextColor(LCD_COLOR_RED);
+    BSP_LCD_DrawHLine(0, LINE(2), 240);
+    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"ERROR", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"INCORRECT GESTURE", CENTER_MODE);
+    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE IS LOCKED", CENTER_MODE);
+    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+    wait_us(3000000);
+}
 /*******************************************/
 // FUNCTIONS
 /*******************************************/
@@ -238,6 +298,7 @@ int main()
         zAxis_arr_base[i] /= 3;
       }
       printf(" the gesture is recorded and saved, please wait for the next command\n");
+      lockMessage();
       rtos::ThisThread::sleep_for(3000ms);
       printf("The device is in recognition mode, Please make a gesture\n");
       break;
@@ -245,7 +306,8 @@ int main()
     else
     {
       // write relavent print statements
-      printf("The device is in recording mode, please record the %d \n", recording_count);
+      printf("The device is in recording mode, please record the gesture \n");
+      startMessage();
     }
   }
   printf("Make a gesture\n");
@@ -284,11 +346,13 @@ int main()
       if (result)
       {
         printf("gesture matched, unlocked\n");
+        unlockMessage();
         // break;
       }
       else
       {
         printf("gesture not matched, try again in 2 seconds\n");
+        errorMessage();
       }
     }
   }
