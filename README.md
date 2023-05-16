@@ -17,9 +17,11 @@ the resource. (*User must press detect pattern in the serial monitor*)
 **Logic Used:**
 * Using the gyroscope, I collected RAW data of the change in radians.
 * Each movement will have 3 coordinates (i.e. aX, aY, aZ) 
-* I am recording 1 gesture movement.
-* Then normalizing the data based on linear algebra using L2 norm.
+* I am recording 1 gesture movement. The board automatically starts recording values once there is a movement in any one of the axis, the user does not have to press any button to start or stop recording.
+* Once the recording starts, the gesture is recorded for a fixed time of 2 seconds and saved.
+* This saved gesture becomes the base gesture, and every gesture that is performed after that is compared with this base gesture using L2  norm
 * And using this normalized data to make decision whether the entered gesture matches the saved gesture and how close the match is.
+* The board remains locked untill the correct gesture is recorded. The user gets multiple attempts to try and unlock the device.
 
 **Video Demonstration:** [Link](https://drive.google.com/file/d/1lBpOHOMhmpoazfBHMAqMsBt1aU_QnAA6/view?usp=share_link)
 
