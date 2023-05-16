@@ -153,7 +153,7 @@ bool findMatch()
     y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
     z_loss += pow((zAxis_arr_base[i] - zAxis_arr_new[i]), 2);
   }
-  printf("%d, %d, %d", x_loss, y_loss, z_loss);
+  printf("%d, %d, %d\n", x_loss, y_loss, z_loss);
   if (x_loss > THRESHOLD || y_loss > THRESHOLD || z_loss > THRESHOLD)
     return false;
   return true;
@@ -222,9 +222,12 @@ int main()
       }
       printf("gesture %d recorded\n", recording_count + 1);
       printf("wait for 5 seconds\n");
-      rtos::ThisThread::sleep_for(2000ms);
-      printf("start next recording\n");
       recording_count++;
+      if (recording_count < 3)
+      {
+        rtos::ThisThread::sleep_for(2000ms);
+        printf("start next recording\n");
+      }
     }
     else if (recording_count >= 3)
     {
