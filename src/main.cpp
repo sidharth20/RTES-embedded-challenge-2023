@@ -80,57 +80,62 @@ float dist_cov;
 /*******************************************/
 void startMessage()
 {
-    lcd.Clear(LCD_COLOR_BLACK);
-    lcd.SetBackColor(LCD_COLOR_BLACK);
-    lcd.SetTextColor(LCD_COLOR_ORANGE);
-    BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"!START RECORDING", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"GESTURE", CENTER_MODE);
-    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
-    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
-    wait_us(3000000);
+  lcd.Clear(LCD_COLOR_BLACK);
+  lcd.SetBackColor(LCD_COLOR_BLACK);
+  lcd.SetTextColor(LCD_COLOR_ORANGE);
+  BSP_LCD_DrawHLine(0, LINE(2), 240);
+  lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"!START RECORDING", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"GESTURE", CENTER_MODE);
+  // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+  BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
 }
-
 
 void lockMessage()
 {
-    lcd.Clear(LCD_COLOR_BLACK);
-    lcd.SetBackColor(LCD_COLOR_BLACK);
-    lcd.SetTextColor(LCD_COLOR_WHITE);
-    BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"GESTURE RECORDED", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE LOCKED", CENTER_MODE);
-    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
-    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
-    wait_us(3000000);
+  lcd.Clear(LCD_COLOR_BLACK);
+  lcd.SetBackColor(LCD_COLOR_BLACK);
+  lcd.SetTextColor(LCD_COLOR_WHITE);
+  BSP_LCD_DrawHLine(0, LINE(2), 240);
+  lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"GESTURE RECORDED", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE LOCKED", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(15), (uint8_t *)"Start Unlock Sequence", CENTER_MODE);
+  BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
 }
 
 void unlockMessage()
 {
-    lcd.Clear(LCD_COLOR_BLACK);
-    lcd.SetBackColor(LCD_COLOR_BLACK);
-    lcd.SetTextColor(LCD_COLOR_GREEN);
-    BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"CORRECT GESTURE", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE UNLOCKED", CENTER_MODE);
-    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
-    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
-    wait_us(3000000);
+  lcd.Clear(LCD_COLOR_BLACK);
+  lcd.SetBackColor(LCD_COLOR_BLACK);
+  lcd.SetTextColor(LCD_COLOR_GREEN);
+  BSP_LCD_DrawHLine(0, LINE(2), 240);
+  lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"CORRECT GESTURE", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE UNLOCKED", CENTER_MODE);
+  // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+  BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
 }
 
 void errorMessage()
 {
-    lcd.Clear(LCD_COLOR_BLACK);
-    lcd.SetBackColor(LCD_COLOR_BLACK);
-    lcd.SetTextColor(LCD_COLOR_RED);
-    BSP_LCD_DrawHLine(0, LINE(2), 240);
-    lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"ERROR", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"INCORRECT GESTURE", CENTER_MODE);
-    lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE IS LOCKED", CENTER_MODE);
-    // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
-    BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
-    wait_us(3000000);
+  lcd.Clear(LCD_COLOR_BLACK);
+  lcd.SetBackColor(LCD_COLOR_BLACK);
+  lcd.SetTextColor(LCD_COLOR_RED);
+  BSP_LCD_DrawHLine(0, LINE(2), 240);
+  lcd.DisplayStringAt(0, LINE(1), (uint8_t *)"ERROR", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(3), (uint8_t *)"INCORRECT GESTURE", CENTER_MODE);
+  lcd.DisplayStringAt(0, LINE(9), (uint8_t *)"DEVICE IS LOCKED", CENTER_MODE);
+  // lcd.DisplayStringAt(0, LINE(10), (uint8_t *)"IS REACHED", CENTER_MODE);
+  BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
 }
+void printMessage(char *message)
+{
+  lcd.Clear(LCD_COLOR_BLACK);
+  lcd.SetBackColor(LCD_COLOR_BLACK);
+  lcd.SetTextColor(LCD_COLOR_ORANGE);
+  BSP_LCD_DrawHLine(0, LINE(2), 240);
+  lcd.DisplayStringAt(0, LINE(9), (uint8_t *)message, CENTER_MODE);
+  BSP_LCD_DrawRect(20, LINE(8), 200, LINE(4));
+}
+
 /*******************************************/
 // FUNCTIONS
 /*******************************************/
@@ -278,6 +283,7 @@ int main()
         printf("y- %d\n", gy);
         printf("z- %d\n", gz);
         printf("\n\n");
+        printMessage("Recording...");
         rtos::ThisThread::sleep_for(50ms);
       }
       printf("gesture %d recorded\n", recording_count + 1);
@@ -291,16 +297,17 @@ int main()
     }
     else if (recording_count >= 3)
     {
-      for (int i = 0; i < 40; i++)
-      {
-        xAxis_arr_base[i] /= 3;
-        yAxis_arr_base[i] /= 3;
-        zAxis_arr_base[i] /= 3;
-      }
+      // for (int i = 0; i < 40; i++)
+      // {
+      //   xAxis_arr_base[i] /= 3;
+      //   yAxis_arr_base[i] /= 3;
+      //   zAxis_arr_base[i] /= 3;
+      // }
       printf(" the gesture is recorded and saved, please wait for the next command\n");
-      lockMessage();
+      printMessage("Gesture Saved");
       rtos::ThisThread::sleep_for(3000ms);
       printf("The device is in recognition mode, Please make a gesture\n");
+      lockMessage();
       break;
     }
     else
@@ -313,6 +320,7 @@ int main()
   printf("Make a gesture\n");
   while (1)
   {
+    lockMessage();
     int gx = getX();
     int gy = getY();
     int gz = getZ();
@@ -338,6 +346,7 @@ int main()
         printf("y- %d\n", gy);
         printf("z- %d\n", gz);
         printf("\n\n");
+        printMessage("Recording...");
         rtos::ThisThread::sleep_for(50ms);
       }
       printf("Gesture recorded\n");
@@ -347,12 +356,14 @@ int main()
       {
         printf("gesture matched, unlocked\n");
         unlockMessage();
+        rtos::ThisThread::sleep_for(3000ms);
         // break;
       }
       else
       {
         printf("gesture not matched, try again in 2 seconds\n");
         errorMessage();
+        rtos::ThisThread::sleep_for(3000ms);
       }
     }
   }
