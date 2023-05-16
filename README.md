@@ -26,3 +26,4 @@ the resource. (*User must press detect pattern in the serial monitor*)
 **Group Members**
 * Sidharth Shyamsukha(ss14885@nyu.edu)
 * Shvejan Mutheboyina(ssm10076@nyu.edu)
+* Siddharth Nair(sm10437@nyu.edu)
