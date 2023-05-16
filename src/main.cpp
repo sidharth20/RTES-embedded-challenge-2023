@@ -1,8 +1,8 @@
 #include <mbed.h>
 
-/***************/
+/*******************************************/
 // DEFINES
-/***************/
+/*******************************************/
 #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, PA_0)
 // #define BUTTON_STATE HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13)
 #define LED_HIGH HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)
@@ -47,16 +47,16 @@ Z corresponds to Yaw angle */
 
 /* Factor to convert Angles to radians */
 #define ANG_TO_RAD 0.0174533 // Pi/180
-
-/***************/
+#define THRESHOLD 60
+/*******************************************/
 // PIN DECLARATIONS
-/***************/
+/*******************************************/
 SPI spi(PF_9, PF_8, PF_7);
 DigitalOut cs(PC_1);
 
-/***************/
+/*******************************************/
 // GLOBAL VARIABLES
-/***************/
+/*******************************************/
 int RegRW;
 Timer tim;
 Ticker t;
@@ -66,14 +66,14 @@ volatile bool FetchSamples = 0;
 volatile int AngularMode = 0;
 int arr_index = 0;
 
-volatile int xAxis_arr[256], yAxis_arr[256], zAxis_arr[256];
-volatile int xAxis_arr2[256], yAxis_arr2[256], zAxis_arr2[256];
+volatile int xAxis_arr_base[200], yAxis_arr_base[200], zAxis_arr_base[200];
+volatile int xAxis_arr_new[200], yAxis_arr_new[200], zAxis_arr_new[200];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
-/***************/
+/*******************************************/
 // FUNCTIONS
-/***************/
+/*******************************************/
 void sysStall()
 {
 }
@@ -141,6 +141,24 @@ int getZ()
   return zAxis_rad;
 }
 
+bool findMatch()
+{
+  // If the error between the recorded and input sequence is within the tolerance, return true.
+  int x_loss = 0;
+  int y_loss = 0;
+  int z_loss = 0;
+  for (uint32_t i = 0; i < 40; i++)
+  {
+    x_loss += pow((xAxis_arr_base[i] - xAxis_arr_new[i]), 2);
+    y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
+    z_loss += pow((zAxis_arr_base[i] - zAxis_arr_new[i]), 2);
+  }
+  printf("%d, %d, %d\n", x_loss, y_loss, z_loss);
+  if (x_loss > THRESHOLD || y_loss > THRESHOLD || z_loss > THRESHOLD)
+    return false;
+  return true;
+}
+
 int main()
 {
   cs = 1;
@@ -170,85 +188,110 @@ int main()
 
   tim.start();
   t.attach(&FetchAxesValues, 500ms);
-  int flag_start=0;
-  int lock_flag=0;
+  int recording_count = 2;
+  bool result = false;
 
-  int curSamples = 1;
-  int totalSamples = 3;
   while (1)
   {
-        if(!lock_flag){
-            if (getX() != 0 || getY() != 0 || getZ() != 0)
-            {
-                flag_start=1;
-            }
-            if(flag_start){
-                if(arr_index==256) continue;
-                xAxis_arr[arr_index] += getX();
-                yAxis_arr[arr_index] += getY();
-                zAxis_arr[arr_index] += getZ();
-                arr_index++;
-
-                printf("x- %d\n",getX());
-                printf("y- %d\n",getY());
-                printf("z- %d\n",getZ());
-                printf("\n\n");
-
-                // if(arr_index==200) break;
-                rtos::ThisThread::sleep_for(10ms);
-                }
-
-            if(arr_index>=256 && flag_start==1){
-                rtos::ThisThread::sleep_for(2000ms);
-                arr_index=0;
-                flag_start=0;
-                curSamples++;
-                printf("Please record key gesture %d more time\n",(totalSamples-curSamples+1));
-            }
-
-            if(curSamples == totalSamples){
-                /* go to check phase and unlocking phase*/
-                printf("Done\n");
-                lock_flag=1;
-                continue;
-                //break;
-            }
-    }
-    else{
-        break;
-        // printf("test");
-    }
-  }
-  
-  //Now recording the user gesture for verification
-  while(1){
-    flag_start=0;
-    arr_index=0;
-
-    if (getX() != 0 || getY() != 0 || getZ() != 0)
+    int gx = getX();
+    int gy = getY();
+    int gz = getZ();
+    FetchSamples = 0;
+    if (recording_count < 3 && (gx != 0 || gy != 0 || gz != 0))
     {
-        flag_start=1;
-    }
-    if(flag_start){
-        if(arr_index==256) continue;
-        xAxis_arr2[arr_index] += getX();
-        yAxis_arr2[arr_index] += getY();
-        zAxis_arr2[arr_index] += getZ();
+
+      arr_index = 0;
+      while (arr_index < 40)
+      {
+        gx = getX();
+        gy = getY();
+        gz = getZ();
+
+        xAxis_arr_base[arr_index] += gx;
+        yAxis_arr_base[arr_index] += gy;
+        zAxis_arr_base[arr_index] += gz;
+
         arr_index++;
-
-        printf("x- %d\n",getX());
-        printf("y- %d\n",getY());
-        printf("z- %d\n",getZ());
+        //  add the values to array
+        // record 200 values and break
+        printf("x- %d\n", gx);
+        printf("y- %d\n", gy);
+        printf("z- %d\n", gz);
         printf("\n\n");
-
-        // if(arr_index==200) break;
-        rtos::ThisThread::sleep_for(10ms);
-        }
-    if(arr_index==256) break; 
+        rtos::ThisThread::sleep_for(50ms);
+      }
+      printf("gesture %d recorded\n", recording_count + 1);
+      printf("wait for 5 seconds\n");
+      recording_count++;
+      if (recording_count < 3)
+      {
+        rtos::ThisThread::sleep_for(2000ms);
+        printf("start next recording\n");
+      }
+    }
+    else if (recording_count >= 3)
+    {
+      for (int i = 0; i < 40; i++)
+      {
+        xAxis_arr_base[i] /= 3;
+        yAxis_arr_base[i] /= 3;
+        zAxis_arr_base[i] /= 3;
+      }
+      printf(" the gesture is recorded and saved, please wait for the next command\n");
+      rtos::ThisThread::sleep_for(3000ms);
+      printf("The device is in recognition mode, Please make a gesture\n");
+      break;
+    }
+    else
+    {
+      // write relavent print statements
+      printf("The device is in recording mode, please record the %d \n", recording_count);
+    }
   }
-  //Now we average out the calculation recorded values and start the recording again for unlock sequence
-  //And now we compare both the recorded values
+  printf("Make a gesture\n");
+  while (1)
+  {
+    int gx = getX();
+    int gy = getY();
+    int gz = getZ();
+    FetchSamples = 0;
+    if (gx != 0 || gy != 0 || gz != 0)
+    {
 
+      arr_index = 0;
+      while (arr_index < 40)
+      {
+        gx = getX();
+        gy = getY();
+        gz = getZ();
+
+        xAxis_arr_new[arr_index] = gx;
+        yAxis_arr_new[arr_index] = gy;
+        zAxis_arr_new[arr_index] = gz;
+
+        arr_index++;
+        //  add the values to array
+        // record 200 values and break
+        printf("x- %d\n", gx);
+        printf("y- %d\n", gy);
+        printf("z- %d\n", gz);
+        printf("\n\n");
+        rtos::ThisThread::sleep_for(50ms);
+      }
+      printf("Gesture recorded\n");
+      printf("Matching the gesture\n");
+      result = findMatch();
+      if (result)
+      {
+        printf("gesture matched, unlocked\n");
+        // break;
+      }
+      else
+      {
+        printf("gesture not matched, try again in 2 seconds\n");
+      }
+    }
+  }
 
   return 0;
 }
