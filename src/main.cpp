@@ -48,6 +48,7 @@ Z corresponds to Yaw angle */
 /* Factor to convert Angles to radians */
 #define ANG_TO_RAD 0.0174533 // Pi/180
 #define THRESHOLD 60
+#define RESOLUTION 80
 /*******************************************/
 // PIN DECLARATIONS
 /*******************************************/
@@ -61,13 +62,13 @@ int RegRW;
 Timer tim;
 Ticker t;
 volatile short xAxis = 0, yAxis = 0, zAxis = 0;
-volatile int xAxis_rad = 0, yAxis_rad = 0, zAxis_rad = 0;
+volatile float xAxis_rad = 0, yAxis_rad = 0, zAxis_rad = 0;
 volatile bool FetchSamples = 0;
 volatile int AngularMode = 0;
 int arr_index = 0;
 
-volatile int xAxis_arr_base[200], yAxis_arr_base[200], zAxis_arr_base[200];
-volatile int xAxis_arr_new[200], yAxis_arr_new[200], zAxis_arr_new[200];
+volatile float xAxis_arr_base[200], yAxis_arr_base[200], zAxis_arr_base[200];
+volatile float xAxis_arr_new[200], yAxis_arr_new[200], zAxis_arr_new[200];
 float avrg_AnglVel_x, avrg_AnglVel_y, avrg_AnglVel_z;
 float lat_Vel;
 float dist_cov;
@@ -120,21 +121,21 @@ void FetchAxesValues()
   FetchSamples = 1;
 }
 
-int getX()
+float getX()
 {
   xAxis = (int)GetAxesFromGyroSensor(OUT_X_L, OUT_X_H);
   xAxis_rad = xAxis * ANG_TO_RAD * 0.01775;
   return xAxis_rad;
 }
 
-int getY()
+float getY()
 {
   yAxis = (int)GetAxesFromGyroSensor(OUT_Y_L, OUT_Y_H);
   yAxis_rad = yAxis * ANG_TO_RAD * 0.01775;
   return yAxis_rad;
 }
 
-int getZ()
+float getZ()
 {
   zAxis = (int)GetAxesFromGyroSensor(OUT_Z_L, OUT_Z_H);
   zAxis_rad = zAxis * ANG_TO_RAD * 0.01775;
@@ -147,11 +148,15 @@ bool findMatch()
   int x_loss = 0;
   int y_loss = 0;
   int z_loss = 0;
-  for (uint32_t i = 0; i < 40; i++)
+  for (uint32_t i = 0; i < RESOLUTION; i++)
   {
-    x_loss += pow((xAxis_arr_base[i] - xAxis_arr_new[i]), 2);
-    y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
-    z_loss += pow((zAxis_arr_base[i] - zAxis_arr_new[i]), 2);
+    // x_loss += pow((xAxis_arr_base[i] - xAxis_arr_new[i]), 2);
+    // y_loss += pow((yAxis_arr_base[i] - yAxis_arr_new[i]), 2);
+    // z_loss += pow((zAxis_arr_base[i] - zAxis_arr_new[i]), 2);
+
+    x_loss += (xAxis_arr_base[i] - xAxis_arr_new[i]);
+    y_loss += (yAxis_arr_base[i] - yAxis_arr_new[i]);
+    z_loss += (zAxis_arr_base[i] - zAxis_arr_new[i]);
   }
   printf("%d, %d, %d\n", x_loss, y_loss, z_loss);
   if (x_loss > THRESHOLD || y_loss > THRESHOLD || z_loss > THRESHOLD)
@@ -193,15 +198,15 @@ int main()
 
   while (1)
   {
-    int gx = getX();
-    int gy = getY();
-    int gz = getZ();
+    float gx = getX();
+    float gy = getY();
+    float gz = getZ();
     FetchSamples = 0;
-    if (recording_count < 3 && (gx != 0 || gy != 0 || gz != 0))
+    if (recording_count < 3 && ((int)gx != 0 || (int)gy != 0 || (int)gz != 0))
     {
 
       arr_index = 0;
-      while (arr_index < 40)
+      while (arr_index < RESOLUTION)
       {
         gx = getX();
         gy = getY();
@@ -214,11 +219,11 @@ int main()
         arr_index++;
         //  add the values to array
         // record 200 values and break
-        printf("x- %d\n", gx);
-        printf("y- %d\n", gy);
-        printf("z- %d\n", gz);
+        printf("x- %f\n", gx);
+        printf("y- %f\n", gy);
+        printf("z- %f\n", gz);
         printf("\n\n");
-        rtos::ThisThread::sleep_for(50ms);
+        rtos::ThisThread::sleep_for(25ms);
       }
       printf("gesture %d recorded\n", recording_count + 1);
       printf("wait for 5 seconds\n");
@@ -231,7 +236,7 @@ int main()
     }
     else if (recording_count >= 3)
     {
-      for (int i = 0; i < 40; i++)
+      for (int i = 0; i < RESOLUTION; i++)
       {
         xAxis_arr_base[i] /= 3;
         yAxis_arr_base[i] /= 3;
@@ -251,15 +256,15 @@ int main()
   printf("Make a gesture\n");
   while (1)
   {
-    int gx = getX();
-    int gy = getY();
-    int gz = getZ();
+    float gx = getX();
+    float gy = getY();
+    float gz = getZ();
     FetchSamples = 0;
-    if (gx != 0 || gy != 0 || gz != 0)
+    if ((int)gx != 0 || (int)gy != 0 || (int)gz != 0)
     {
 
       arr_index = 0;
-      while (arr_index < 40)
+      while (arr_index < RESOLUTION)
       {
         gx = getX();
         gy = getY();
@@ -272,11 +277,11 @@ int main()
         arr_index++;
         //  add the values to array
         // record 200 values and break
-        printf("x- %d\n", gx);
-        printf("y- %d\n", gy);
-        printf("z- %d\n", gz);
+        printf("x- %f\n", gx);
+        printf("y- %f\n", gy);
+        printf("z- %f\n", gz);
         printf("\n\n");
-        rtos::ThisThread::sleep_for(50ms);
+        rtos::ThisThread::sleep_for(25ms);
       }
       printf("Gesture recorded\n");
       printf("Matching the gesture\n");
