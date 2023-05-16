@@ -51,7 +51,7 @@ Z corresponds to Yaw angle */
 
 /* Factor to convert Angles to radians */
 #define ANG_TO_RAD 0.0174533 // Pi/180
-#define THRESHOLD 1
+#define THRESHOLD 1.9
 #define RESOLUTION 80
 /*******************************************/
 // PIN DECLARATIONS
